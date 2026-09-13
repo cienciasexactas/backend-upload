@@ -48,7 +48,8 @@ export default async function handler(req, res) {
           ficheiros: ficheiros.filter(f => f.type === 'file').map(f => ({
             nome: f.name,
             tamanho: f.size,
-            url: f.html_url
+            // Altere para (Link direto do arquivo no GitHub Pages):
+            url: `https://cienciasexactas.github.io/uploads/${curso}/${pastaAno.name}/${encodeURIComponent(f.name)}`
           }))
         });
       }
