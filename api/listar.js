@@ -43,14 +43,42 @@ export default async function handler(req, res) {
 
       if (resFicheiros.ok) {
         const ficheiros = await resFicheiros.json();
-        resultado.push({
-          ano: pastaAno.name,
-          ficheiros: ficheiros.filter(f => f.type === 'file').map(f => ({
+        const listaFicheiros = [];
+
+        for (const f of ficheiros.filter(item => item.type === 'file')) {
+          // Busca a data do último commit do ficheiro
+          let dataEnvio = null;
+          try {
+            const resCommit = await fetch(
+              `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits?path=${f.path}&page=1&per_page=1`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                  'User-Agent': 'Vercel-Lister'
+                }
+              }
+            );
+            if (resCommit.ok) {
+              const commitData = await resCommit.json();
+              if (commitData.length > 0) {
+                dataEnvio = commitData[0].commit.committer.date;
+              }
+            }
+          } catch (e) {
+            console.error("Erro ao buscar data:", e);
+          }
+
+          listaFicheiros.push({
             nome: f.name,
             tamanho: f.size,
-            // Altere para (Link direto do arquivo no GitHub Pages):
-            url: `https://cienciasexactas.github.io/uploads/${curso}/${pastaAno.name}/${encodeURIComponent(f.name)}`
-          }))
+            url: `https://cienciasexactas.github.io/uploads/${curso}/${pastaAno.name}/${encodeURIComponent(f.name)}`,
+            data: dataEnvio
+          });
+        }
+
+        resultado.push({
+          ano: pastaAno.name,
+          ficheiros: listaFicheiros
         });
       }
     }
